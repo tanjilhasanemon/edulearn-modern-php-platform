@@ -21,6 +21,7 @@ if ($featured_courses_result) {
 $total_courses = 0;
 $total_students = 0;
 $total_instructors = 0;
+$average_rating = 0;
 
 $res_courses = mysqli_query($connection, "SELECT COUNT(*) AS count FROM courses WHERE status='published'");
 if ($res_courses) {
@@ -41,9 +42,14 @@ if ($total_students <= 0) {
     }
 }
 
-$res_instructors = mysqli_query($connection, "SELECT COUNT(DISTINCT instructor_id) AS count FROM courses");
+$res_instructors = mysqli_query($connection, "SELECT COUNT(*) AS count FROM instructors");
 if ($res_instructors) {
     $total_instructors = (int) (mysqli_fetch_assoc($res_instructors)['count'] ?? 0);
+}
+
+$res_avg_rating = mysqli_query($connection, "SELECT AVG(rating) AS avg_rating FROM courses WHERE status='published'");
+if ($res_avg_rating) {
+    $average_rating = (float) (mysqli_fetch_assoc($res_avg_rating)['avg_rating'] ?? 0);
 }
 
 function get_course_thumbnail_path_home($thumbnail, $category) {
@@ -67,134 +73,56 @@ function get_course_thumbnail_path_home($thumbnail, $category) {
     return 'images/' . $fallback;
 }
 
-$home_instructors = array(
-    array(
-        'name' => 'Sarah Anderson',
-        'role' => 'Senior UI and Web Design Mentor',
-        'photo' => 'instructor-sarah.png',
-        'experience' => '10+ years teaching',
-        'specialization' => 'Responsive design and accessibility'
-    ),
-    array(
-        'name' => 'Michael Chen',
-        'role' => 'Database Architecture Instructor',
-        'photo' => 'instructor-michael.png',
-        'experience' => '12 years in enterprise systems',
-        'specialization' => 'SQL optimization and data modeling'
-    ),
-    array(
-        'name' => 'Emily Rodriguez',
-        'role' => 'Full Stack JavaScript Coach',
-        'photo' => 'instructor-emily.png',
-        'experience' => '8 years building products',
-        'specialization' => 'React, Node.js, and frontend engineering'
-    ),
-    array(
-        'name' => 'David Williams',
-        'role' => 'Backend Development Expert',
-        'photo' => 'instructor-david.png',
-        'experience' => '9 years in PHP and APIs',
-        'specialization' => 'Laravel, API architecture, and MySQL'
-    ),
-    array(
-        'name' => 'Olivia Bennett',
-        'role' => 'Product Design and UX Instructor',
-        'photo' => 'instructor-olivia.png',
-        'experience' => '11 years in product teams',
-        'specialization' => 'Design thinking, UX writing, and wireframing'
-    ),
-    array(
-        'name' => 'Daniel Novak',
-        'role' => 'Cloud and DevOps Mentor',
-        'photo' => 'instructor-daniel.png',
-        'experience' => '10 years in cloud infrastructure',
-        'specialization' => 'CI/CD, Docker, and AWS deployment workflows'
-    ),
-    array(
-        'name' => 'Sophia Klein',
-        'role' => 'Frontend Performance Specialist',
-        'photo' => 'instructor-sophia.png',
-        'experience' => '7 years optimizing web apps',
-        'specialization' => 'Performance tuning, accessibility, and Core Web Vitals'
-    ),
-    array(
-        'name' => 'James Carter',
-        'role' => 'Backend API Architecture Mentor',
-        'photo' => 'instructor-james.png',
-        'experience' => '13 years in enterprise backend systems',
-        'specialization' => 'REST API design, authentication, and scalable services'
-    )
-);
+$home_instructors = array();
+$home_instructors_query = "
+    SELECT
+        u.fullname AS name,
+        u.profile_picture AS photo,
+        i.title,
+        i.experience_years,
+        i.expertise,
+        i.bio,
+        COUNT(c.id) AS published_courses,
+        COALESCE(SUM(c.students_count), 0) AS taught_students
+    FROM instructors i
+    INNER JOIN users u ON i.user_id = u.id
+    LEFT JOIN courses c ON c.instructor_id = u.id AND c.status = 'published'
+    GROUP BY i.id, u.id
+    ORDER BY taught_students DESC, published_courses DESC, u.fullname ASC
+    LIMIT 8
+";
+$home_instructors_result = mysqli_query($connection, $home_instructors_query);
+if ($home_instructors_result) {
+    while ($row = mysqli_fetch_assoc($home_instructors_result)) {
+        $home_instructors[] = $row;
+    }
+}
 
-// Keep displayed instructor metric consistent with showcased homepage mentors.
-$total_instructors = max($total_instructors, count($home_instructors));
-
-$home_testimonials = array(
-    array(
-        'name' => 'Emma Wilson',
-        'avatar' => 'student-avatar-1.png',
-        'course' => 'React.js Fundamentals',
-        'rating' => '4.9',
-        'review' => 'The lessons are clean, beginner friendly, and practical. I built my first portfolio project in 3 weeks.'
-    ),
-    array(
-        'name' => 'Liam Thompson',
-        'avatar' => 'student-avatar-2.png',
-        'course' => 'MySQL Database Design',
-        'rating' => '4.8',
-        'review' => 'Great structure and quality explanations. The database projects helped me perform better in my internship.'
-    ),
-    array(
-        'name' => 'Isabella Martinez',
-        'avatar' => 'student-avatar-3.png',
-        'course' => 'Modern Web Design Fundamentals',
-        'rating' => '5.0',
-        'review' => 'Everything looks professional and easy to follow. The feedback style made learning much less stressful.'
-    ),
-    array(
-        'name' => 'Noah Anderson',
-        'avatar' => 'student-avatar-4.png',
-        'course' => 'PHP for Dynamic Websites',
-        'rating' => '4.9',
-        'review' => 'I liked the mix of theory and practice. The course flow feels premium and helped me finish real projects faster.'
-    ),
-    array(
-        'name' => 'Ava Richardson',
-        'avatar' => 'student-avatar-5.png',
-        'course' => 'Responsive Web Design Mastery',
-        'rating' => '4.8',
-        'review' => 'The structure is very clear and every module feels purpose-driven. I improved my UI work quality significantly.'
-    ),
-    array(
-        'name' => 'Lucas Rivera',
-        'avatar' => 'student-avatar-6.png',
-        'course' => 'Advanced CSS Techniques',
-        'rating' => '4.9',
-        'review' => 'Loved the practical assignments and design feedback style. The class helped me land freelance clients quickly.'
-    ),
-    array(
-        'name' => 'Mia Roberts',
-        'avatar' => 'student-avatar-7.png',
-        'course' => 'Full Stack Web Development',
-        'rating' => '5.0',
-        'review' => 'Excellent roadmap from basics to advanced concepts. I finally understood how frontend and backend connect in real projects.'
-    ),
-    array(
-        'name' => 'Ethan Cooper',
-        'avatar' => 'student-avatar-8.png',
-        'course' => 'SQL Mastery Bootcamp',
-        'rating' => '4.8',
-        'review' => 'The SQL practice tasks were realistic and interview-focused. I now write better queries with confidence.'
-    )
-);
+$home_testimonials = array();
+$home_testimonials_query = "
+    SELECT
+        COALESCE(NULLIF(t.display_name, ''), u.fullname) AS name,
+        COALESCE(NULLIF(u.profile_picture, ''), 'student-avatar-1.png') AS avatar,
+        c.title AS course,
+        t.rating,
+        t.comment AS review
+    FROM testimonials t
+    INNER JOIN users u ON t.student_id = u.id
+    INNER JOIN courses c ON t.course_id = c.id
+    WHERE t.status = 'approved'
+    ORDER BY t.created_at DESC
+    LIMIT 8
+";
+$home_testimonials_result = mysqli_query($connection, $home_testimonials_query);
+if ($home_testimonials_result) {
+    while ($row = mysqli_fetch_assoc($home_testimonials_result)) {
+        $home_testimonials[] = $row;
+    }
+}
 
 $hero_banner = 'images/hero-banner.png';
 if (file_exists(__DIR__ . '/images/hero-banner-v2.png')) {
     $hero_banner = 'images/hero-banner-v2.png';
-} elseif (file_exists(__DIR__ . '/images/hero-banner-v2.jpg')) {
-    $hero_banner = 'images/hero-banner-v2.jpg';
-} elseif (file_exists(__DIR__ . '/images/hero-banner-v2.webp')) {
-    $hero_banner = 'images/hero-banner-v2.webp';
 }
 ?>
 
@@ -218,7 +146,7 @@ if (file_exists(__DIR__ . '/images/hero-banner-v2.png')) {
                 <span>Active learners</span>
             </div>
             <div class="hero-highlight-item">
-                <strong>4.8/5</strong>
+                <strong><?php echo number_format($average_rating > 0 ? $average_rating : 4.8, 1); ?>/5</strong>
                 <span>Average course rating</span>
             </div>
         </div>
@@ -277,7 +205,7 @@ if (file_exists(__DIR__ . '/images/hero-banner-v2.png')) {
             <div class="stat-card"><h3><?php echo number_format($total_courses); ?></h3><p>Published Courses</p></div>
             <div class="stat-card"><h3><?php echo number_format($total_students); ?></h3><p>Active Learners</p></div>
             <div class="stat-card"><h3><?php echo number_format($total_instructors); ?></h3><p>Featured Mentors</p></div>
-            <div class="stat-card"><h3>4.8/5</h3><p>Average Rating</p></div>
+            <div class="stat-card"><h3><?php echo number_format($average_rating > 0 ? $average_rating : 4.8, 1); ?>/5</h3><p>Average Rating</p></div>
         </div>
     </div>
 </section>
@@ -312,13 +240,13 @@ if (file_exists(__DIR__ . '/images/hero-banner-v2.png')) {
         <div class="instructors-grid">
             <?php foreach ($home_instructors as $instructor): ?>
                 <article class="instructor-profile-card">
-                    <img class="instructor-profile-photo" src="images/<?php echo htmlspecialchars($instructor['photo']); ?>" alt="<?php echo htmlspecialchars($instructor['name']); ?>">
+                    <img class="instructor-profile-photo" src="images/<?php echo htmlspecialchars(!empty($instructor['photo']) ? $instructor['photo'] : 'instructor-sarah.png'); ?>" alt="<?php echo htmlspecialchars($instructor['name']); ?>">
                     <h3 class="course-card-title"><?php echo htmlspecialchars($instructor['name']); ?></h3>
-                    <p class="instructor-profile-role"><?php echo htmlspecialchars($instructor['role']); ?></p>
-                    <p class="course-card-description">Focused on practical learning paths that help students move from beginner to confident practitioner.</p>
+                    <p class="instructor-profile-role"><?php echo htmlspecialchars($instructor['title'] ?? 'Instructor'); ?></p>
+                    <p class="course-card-description"><?php echo htmlspecialchars(substr((string) ($instructor['bio'] ?? 'Focused on practical learning paths that help students move from beginner to confident practitioner.'), 0, 115)); ?>...</p>
                     <div class="instructor-profile-meta">
-                        <span><?php echo htmlspecialchars($instructor['experience']); ?></span>
-                        <span><?php echo htmlspecialchars($instructor['specialization']); ?></span>
+                        <span><?php echo (int) ($instructor['experience_years'] ?? 0); ?>+ years teaching</span>
+                        <span><?php echo htmlspecialchars(substr((string) ($instructor['expertise'] ?? 'Industry mentorship and guided projects'), 0, 55)); ?></span>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -343,7 +271,7 @@ if (file_exists(__DIR__ . '/images/hero-banner-v2.png')) {
                             <p style="margin: 0; font-size: 0.86rem;"><?php echo htmlspecialchars($item['course']); ?></p>
                         </div>
                     </div>
-                    <p class="testimonial-rating">Rating: <?php echo htmlspecialchars($item['rating']); ?>/5</p>
+                    <p class="testimonial-rating">Rating: <?php echo number_format((float) ($item['rating'] ?? 0), 1); ?>/5</p>
                     <p class="testimonial-text"><?php echo htmlspecialchars($item['review']); ?></p>
                 </article>
             <?php endforeach; ?>

@@ -40,7 +40,7 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 $course_query = "
     SELECT c.*, u.fullname as instructor_name, u.email as instructor_email, 
            u.bio as instructor_bio, u.profile_picture as instructor_picture,
-           i.expertise, i.experience_years, i.rating as instructor_rating,
+           i.title as instructor_title, i.expertise, i.experience_years, i.rating as instructor_rating,
            i.courses_created, i.students_taught
     FROM courses c 
     LEFT JOIN users u ON c.instructor_id = u.id 
@@ -55,53 +55,25 @@ if (!$course_result || mysqli_num_rows($course_result) === 0) {
 }
 
 $course = mysqli_fetch_assoc($course_result);
+$instructor_photo = 'instructor-sarah.png';
+if (!empty($course['instructor_picture'])) {
+    $candidate_path = dirname(__DIR__) . '/images/' . $course['instructor_picture'];
+    if (file_exists($candidate_path)) {
+        $instructor_photo = $course['instructor_picture'];
+    }
+}
 
-$instructor_profiles = array(
-    'sarah anderson' => array(
-        'photo' => 'instructor-sarah.png',
-        'education' => 'M.A. in Visual Communication Design, University of Brighton',
-        'teaching_experience' => '8+ years teaching UI and web design bootcamps',
-        'work_experience' => 'Former lead designer at two international digital agencies',
-        'specialization' => 'UI systems, responsive design, accessibility, and design handoff',
-        'bio' => 'Sarah helps beginners build design confidence with practical workflows and portfolio-ready projects.'
-    ),
-    'michael chen' => array(
-        'photo' => 'instructor-michael.png',
-        'education' => 'M.Sc. in Data Engineering, National University of Singapore',
-        'teaching_experience' => '10 years mentoring database and backend learners',
-        'work_experience' => '12+ years designing high-volume database systems for fintech teams',
-        'specialization' => 'SQL performance tuning, data architecture, and relational modeling',
-        'bio' => 'Michael translates complex database topics into clear, project-based lessons for practical mastery.'
-    ),
-    'emily rodriguez' => array(
-        'photo' => 'instructor-emily.png',
-        'education' => 'B.Sc. in Computer Science, University of Texas at Austin',
-        'teaching_experience' => '7 years teaching JavaScript and React to beginner developers',
-        'work_experience' => 'Built frontend products for SaaS startups and edtech platforms',
-        'specialization' => 'Modern JavaScript, React architecture, and component-driven development',
-        'bio' => 'Emily focuses on simple explanations and guided practice so students can build real apps quickly.'
-    ),
-    'david williams' => array(
-        'photo' => 'instructor-david.png',
-        'education' => 'B.Eng. in Software Engineering, University of Manchester',
-        'teaching_experience' => '9 years teaching backend development and API design',
-        'work_experience' => 'Senior backend developer with extensive PHP and cloud deployment experience',
-        'specialization' => 'PHP architecture, secure APIs, MySQL optimization, and backend scalability',
-        'bio' => 'David emphasizes clean backend structure and production-ready practices for long-term growth.'
-    )
-);
+$instructor_title = !empty($course['instructor_title'])
+    ? $course['instructor_title']
+    : (!empty($course['experience_years']) ? ((int) $course['experience_years'] . '+ years teaching experience') : 'Expert Instructor');
 
-$instructor_name_key = strtolower(trim((string)($course['instructor_name'] ?? '')));
-$default_instructor_profile = array(
-    'photo' => 'instructor-sarah.png',
-    'education' => 'Postgraduate Diploma in Computer Science',
-    'teaching_experience' => (($course['experience_years'] ?? 5) . '+ years of teaching experience'),
-    'work_experience' => 'Professional experience delivering real-world software projects',
-    'specialization' => ($course['expertise'] ?? 'Software development and mentoring'),
-    'bio' => ($course['instructor_bio'] ?? 'Dedicated instructor focused on practical learning and measurable student progress.')
-);
+$instructor_bio = !empty($course['instructor_bio'])
+    ? $course['instructor_bio']
+    : 'Dedicated instructor focused on practical learning and measurable student progress.';
 
-$instructor_profile = $instructor_profiles[$instructor_name_key] ?? $default_instructor_profile;
+$instructor_specialization = !empty($course['expertise'])
+    ? $course['expertise']
+    : 'Software development and mentoring';
 
 // Check if user is already enrolled
 $is_enrolled = false;
@@ -275,22 +247,22 @@ $learning_outcomes = array(
             <div class="instructor-card">
                 <div class="instructor-profile-grid">
                     <div>
-                        <img class="instructor-photo" src="<?php echo $path_prefix; ?>images/<?php echo htmlspecialchars($instructor_profile['photo']); ?>" alt="<?php echo htmlspecialchars($course['instructor_name'] ?? 'Instructor'); ?>">
+                        <img class="instructor-photo" src="<?php echo $path_prefix; ?>images/<?php echo htmlspecialchars($instructor_photo); ?>" alt="<?php echo htmlspecialchars($course['instructor_name'] ?? 'Instructor'); ?>">
                     </div>
                     <div class="instructor-info">
                         <h3><?php echo htmlspecialchars($course['instructor_name'] ?? 'Expert Instructor'); ?></h3>
                         <p class="instructor-title">
-                            <?php echo htmlspecialchars($instructor_profile['teaching_experience']); ?>
+                            <?php echo htmlspecialchars($instructor_title); ?>
                         </p>
                         <p class="instructor-bio">
-                            <?php echo htmlspecialchars($instructor_profile['bio']); ?>
+                            <?php echo htmlspecialchars($instructor_bio); ?>
                         </p>
 
                         <div class="instructor-facts">
-                            <div><strong>Education:</strong> <?php echo htmlspecialchars($instructor_profile['education']); ?></div>
-                            <div><strong>Teaching Experience:</strong> <?php echo htmlspecialchars($instructor_profile['teaching_experience']); ?></div>
-                            <div><strong>Work Experience:</strong> <?php echo htmlspecialchars($instructor_profile['work_experience']); ?></div>
-                            <div><strong>Specialization:</strong> <?php echo htmlspecialchars($instructor_profile['specialization']); ?></div>
+                            <div><strong>Profile:</strong> <?php echo htmlspecialchars($course['instructor_email'] ?? 'Not available'); ?></div>
+                            <div><strong>Teaching Experience:</strong> <?php echo (int) ($course['experience_years'] ?? 0); ?>+ years</div>
+                            <div><strong>Courses Created:</strong> <?php echo (int) ($course['courses_created'] ?? 0); ?></div>
+                            <div><strong>Specialization:</strong> <?php echo htmlspecialchars($instructor_specialization); ?></div>
                         </div>
                     </div>
                 </div>

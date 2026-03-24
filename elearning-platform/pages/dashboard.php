@@ -64,6 +64,7 @@ if ($enrolled_result) {
 $total_enrolled = count($enrolled_courses);
 $total_hours_spent = 0;
 $completed_courses = 0;
+$this_week_minutes = 0;
 
 foreach ($enrolled_courses as $course) {
     if ($course['enrollment_status'] === 'completed') {
@@ -71,6 +72,22 @@ foreach ($enrolled_courses as $course) {
     }
     $total_hours_spent += $course['duration_hours'] ?? 0;
 }
+
+$this_week_query = "
+    SELECT COALESCE(SUM(p.time_spent_minutes), 0) AS minutes
+    FROM progress p
+    INNER JOIN enrollments e ON p.enrollment_id = e.id
+    WHERE e.student_id = " . (int) $user_id . "
+      AND p.completion_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+";
+$this_week_result = mysqli_query($connection, $this_week_query);
+if ($this_week_result) {
+    $this_week_minutes = (int) (mysqli_fetch_assoc($this_week_result)['minutes'] ?? 0);
+}
+
+$this_week_hours = floor($this_week_minutes / 60);
+$this_week_remaining_minutes = $this_week_minutes % 60;
+$this_week_display = str_pad((string) $this_week_hours, 2, '0', STR_PAD_LEFT) . ':' . str_pad((string) $this_week_remaining_minutes, 2, '0', STR_PAD_LEFT);
 ?>
 
 <!-- ============================================
@@ -102,7 +119,7 @@ foreach ($enrolled_courses as $course) {
                 <p>Total Hours</p>
             </div>
             <div class="stat-card">
-                <h3>00:00</h3>
+                <h3><?php echo $this_week_display; ?></h3>
                 <p>This Week</p>
             </div>
         </div>

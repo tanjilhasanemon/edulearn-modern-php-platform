@@ -7,6 +7,20 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 include '../includes/header.php';
+include '../includes/database.php';
+
+$login_avg_rating = 0;
+$login_total_students = 0;
+
+$login_rating_result = mysqli_query($connection, "SELECT AVG(rating) AS avg_rating FROM courses WHERE status='published'");
+if ($login_rating_result) {
+    $login_avg_rating = (float) (mysqli_fetch_assoc($login_rating_result)['avg_rating'] ?? 0);
+}
+
+$login_students_result = mysqli_query($connection, "SELECT COALESCE(SUM(students_count), 0) AS count FROM courses WHERE status='published'");
+if ($login_students_result) {
+    $login_total_students = (int) (mysqli_fetch_assoc($login_students_result)['count'] ?? 0);
+}
 ?>
 
 <!-- LOGIN SECTION -->
@@ -145,11 +159,11 @@ include '../includes/header.php';
                 <!-- Stats -->
                 <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center;">
                     <div>
-                        <div style="font-size: 1.75rem; font-weight: 800;">4.8⭐</div>
+                        <div style="font-size: 1.75rem; font-weight: 800;"><?php echo number_format($login_avg_rating > 0 ? $login_avg_rating : 4.8, 1); ?>⭐</div>
                         <p style="color: rgba(255, 255, 255, 0.8); margin: 0; font-size: 0.85rem;">Avg. Rating</p>
                     </div>
                     <div>
-                        <div style="font-size: 1.75rem; font-weight: 800;">150K+</div>
+                        <div style="font-size: 1.75rem; font-weight: 800;"><?php echo number_format($login_total_students); ?></div>
                         <p style="color: rgba(255, 255, 255, 0.8); margin: 0; font-size: 0.85rem;">Happy Learners</p>
                     </div>
                 </div>

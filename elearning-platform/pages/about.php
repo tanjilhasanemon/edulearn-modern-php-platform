@@ -13,6 +13,8 @@ $about_total_students = 0;
 $about_total_courses = 0;
 $about_total_instructors = 0;
 $about_avg_rating = 0;
+$about_total_enrollments = 0;
+$about_total_testimonials = 0;
 
 $q_students = mysqli_query($connection, "SELECT COALESCE(SUM(students_count), 0) AS count FROM courses WHERE status='published'");
 if ($q_students) {
@@ -24,7 +26,7 @@ if ($q_courses) {
     $about_total_courses = (int) (mysqli_fetch_assoc($q_courses)['count'] ?? 0);
 }
 
-$q_instructors = mysqli_query($connection, "SELECT COUNT(DISTINCT instructor_id) AS count FROM courses WHERE status='published'");
+$q_instructors = mysqli_query($connection, "SELECT COUNT(*) AS count FROM instructors");
 if ($q_instructors) {
     $about_total_instructors = (int) (mysqli_fetch_assoc($q_instructors)['count'] ?? 0);
 }
@@ -32,6 +34,16 @@ if ($q_instructors) {
 $q_rating = mysqli_query($connection, "SELECT AVG(rating) AS avg_rating FROM courses WHERE status='published'");
 if ($q_rating) {
     $about_avg_rating = (float) (mysqli_fetch_assoc($q_rating)['avg_rating'] ?? 0);
+}
+
+$q_enrollments = mysqli_query($connection, "SELECT COUNT(*) AS count FROM enrollments WHERE status IN ('active', 'completed')");
+if ($q_enrollments) {
+    $about_total_enrollments = (int) (mysqli_fetch_assoc($q_enrollments)['count'] ?? 0);
+}
+
+$q_testimonials = mysqli_query($connection, "SELECT COUNT(*) AS count FROM testimonials WHERE status='approved'");
+if ($q_testimonials) {
+    $about_total_testimonials = (int) (mysqli_fetch_assoc($q_testimonials)['count'] ?? 0);
 }
 ?>
 
@@ -104,12 +116,12 @@ if ($q_rating) {
                 <p>Average Rating</p>
             </div>
             <div class="stat">
-                <h3>98%</h3>
-                <p>Satisfaction Rate</p>
+                <h3><?php echo number_format($about_total_enrollments); ?></h3>
+                <p>Active Enrollments</p>
             </div>
             <div class="stat">
-                <h3>150+</h3>
-                <p>Countries Reached</p>
+                <h3><?php echo number_format($about_total_testimonials); ?></h3>
+                <p>Approved Testimonials</p>
             </div>
         </div>
     </div>

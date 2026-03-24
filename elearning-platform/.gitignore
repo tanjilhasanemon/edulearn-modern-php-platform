@@ -1,0 +1,33 @@
+# OS noise
+.DS_Store
+Thumbs.db
+
+# VS Code local workspace settings
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# XAMPP / PHP runtime files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# PHP dependency directories (if added later)
+vendor/
+
+# Node dependency directories (if frontend tooling is added later)
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Test and coverage outputs
+coverage/
+.nyc_output/
+
+# Build artifacts
+dist/
+build/
